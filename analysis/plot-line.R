@@ -1,0 +1,5 @@
+library(ggplot2)
+args <- commandArgs(trailingOnly=TRUE)
+data <- read.table(args[1], header=T, sep=',')
+ggplot(data=data, aes(x=time, y=intensity)) + geom_line()
+ggsave(args[2])

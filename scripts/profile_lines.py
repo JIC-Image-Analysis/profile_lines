@@ -8,6 +8,7 @@ import skimage.morphology
 from jicbioimage.core.image import Image
 from jicbioimage.core.transform import transformation
 from jicbioimage.segment import connected_components
+from jicbioimage.transform import dilate_binary
 
 @transformation
 def convert_to_grayscale(rgb_image):
@@ -51,9 +52,10 @@ def save_line_profile(filename, line_profile):
         f.write('time,intensity\n')
         f.write('\n'.join(line_strings))
 
-def segment(line_image):
+def segment(line_image, dilation):
     lines = convert_to_signal(line_image)
     lines = skeletonize(lines)
+    lines = dilate_binary(lines, selem=np.ones((1, dilation)))
     segmentation = connected_components(lines, background=0)
     return segmentation
 
@@ -62,12 +64,12 @@ def yield_line_masks(segmented_lines):
         region = segmented_lines.region_by_identifier(i)
         yield region
 
-def sample_image_from_lines(image_file, lines_file):
+def sample_image_from_lines(image_file, lines_file, dilation):
 
     data_image = Image.from_file(image_file)
     line_image = Image.from_file(lines_file)
 
-    segmented_lines = segment(line_image)
+    segmented_lines = segment(line_image, dilation)
 
     for n, line_region in enumerate(yield_line_masks(segmented_lines)):
         line_profile = line_profile_from_image_and_region(data_image, line_region)
@@ -78,10 +80,12 @@ def main():
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument('kymograph_file', help='Image containing kymograph')
     parser.add_argument('line_file', help='Iamge containing lines')
+    parser.add_argument('-d', '--dilation', default=2, type=int,
+                        help='Dilation of line')
 
     args = parser.parse_args()
 
-    sample_image_from_lines(args.kymograph_file, args.line_file)
+    sample_image_from_lines(args.kymograph_file, args.line_file, args.dilation)
 
 if __name__ == '__main__':
     main()

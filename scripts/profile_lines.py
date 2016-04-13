@@ -28,21 +28,6 @@ def convert_to_signal(line_image):
 def skeletonize(image):
     return skimage.morphology.skeletonize(image)
 
-def convert_to_1d(image):
-    """Return 1d array derived from data in input grayscale image."""
-
-    # Derive via projection
-    return np.amax(image, axis=1)
-
-def line_profile_from_image_and_region(data_image, line_region):
-    """Return 1d profile derived by sampling data_image from the True elements
-    of line_region."""
-
-    masked_data = np.multiply(data_image, line_region)
-    line_profile = convert_to_1d(masked_data)
-
-    return line_profile
-
 def save_line_profile(filename, line_profile):
 
     line_strings = ["{},{}".format(str(t), str(d)) 
@@ -72,7 +57,9 @@ def sample_image_from_lines(image_file, lines_file, dilation):
     segmented_lines = segment(line_image, dilation)
 
     for n, line_region in enumerate(yield_line_masks(segmented_lines)):
-        line_profile = line_profile_from_image_and_region(data_image, line_region)
+        line_intensity = data_image * line_region
+        line_profile = np.amax(line_intensity, axis=1)
+
         filename = "series_{}.csv".format(n)
         save_line_profile(filename, line_profile)
 

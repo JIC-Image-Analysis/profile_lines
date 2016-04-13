@@ -46,17 +46,20 @@ def save_line_profile(filename, line_profile):
         f.write('time,intensity\n')
         f.write('\n'.join(line_strings))
 
+def segment(line_image):
+    lines = convert_to_signal(line_image)
+    segmentation = connected_components(lines, background=0)
+    return segmentation
+
 def sample_image_from_lines(image_file, lines_file):
 
     data_image = Image.from_file(image_file)
     line_image = Image.from_file(lines_file)
 
-    #print data_image.shape
-    lines = convert_to_signal(line_image)
+    segmented_lines = segment(line_image)
 
-    ccs = connected_components(lines, background=0)
-
-    line_regions = [ccs.region_by_identifier(id) for id in ccs.identifiers]
+    line_regions = [segmented_lines.region_by_identifier(id)
+                    for id in segmented_lines.identifiers]
 
     for n, line_region in enumerate(line_regions):
         line_profile = line_profile_from_image_and_region(data_image, line_region)

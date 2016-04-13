@@ -3,6 +3,7 @@
 import argparse
 
 import numpy as np
+import skimage.morphology
 
 from jicbioimage.core.image import Image
 from jicbioimage.core.transform import transformation
@@ -21,6 +22,10 @@ def convert_to_signal(line_image):
     inverted = 255 - grayscale_image
 
     return inverted > 0
+
+@transformation
+def skeletonize(image):
+    return skimage.morphology.skeletonize(image)
 
 def convert_to_1d(image):
     """Return 1d array derived from data in input grayscale image."""
@@ -48,6 +53,7 @@ def save_line_profile(filename, line_profile):
 
 def segment(line_image):
     lines = convert_to_signal(line_image)
+    lines = skeletonize(lines)
     segmentation = connected_components(lines, background=0)
     return segmentation
 

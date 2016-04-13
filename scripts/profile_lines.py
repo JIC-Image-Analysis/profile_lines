@@ -10,10 +10,11 @@ from jicbioimage.core.transform import transformation
 from jicbioimage.segment import connected_components
 from jicbioimage.transform import dilate_binary
 
+
 @transformation
 def convert_to_grayscale(rgb_image):
+    return rgb_image[:, :, 0]
 
-    return rgb_image[:,:,0]
 
 @transformation
 def convert_to_signal(line_image):
@@ -24,18 +25,21 @@ def convert_to_signal(line_image):
 
     return inverted > 0
 
+
 @transformation
 def skeletonize(image):
     return skimage.morphology.skeletonize(image)
 
+
 def save_line_profile(filename, line_profile):
 
-    line_strings = ["{},{}".format(str(t), str(d)) 
-        for t, d in list(enumerate(line_profile))]
+    line_strings = ["{},{}".format(str(t), str(d))
+                    for t, d in list(enumerate(line_profile))]
 
     with open(filename, 'w') as f:
         f.write('time,intensity\n')
         f.write('\n'.join(line_strings))
+
 
 def segment(line_image, dilation):
     lines = convert_to_signal(line_image)
@@ -44,10 +48,12 @@ def segment(line_image, dilation):
     segmentation = connected_components(lines, background=0)
     return segmentation
 
+
 def yield_line_masks(segmented_lines):
     for i in segmented_lines.identifiers:
         region = segmented_lines.region_by_identifier(i)
         yield region
+
 
 def sample_image_from_lines(image_file, lines_file, dilation, reduce_method):
 
@@ -61,13 +67,16 @@ def sample_image_from_lines(image_file, lines_file, dilation, reduce_method):
         if reduce_method == "max":
             line_profile = np.amax(line_intensity, axis=1)
         elif reduce_method == "mean":
-            line_profile = np.sum(line_intensity, axis=1) / np.sum(line_region, axis=1)
+            sum_intensity = np.sum(line_intensity, axis=1)
+            sum_rows = np.sum(line_region, axis=1)
+            line_profile = sum_intensity / sum_rows
         else:
-            raise(RuntimeError("Unknown reduce method: {}".format(reduce_method)))
-        
+            err_msg = "Unknown reduce method: {}".format(reduce_method)
+            raise(RuntimeError(err_msg))
 
         filename = "series_{}.csv".format(n)
         save_line_profile(filename, line_profile)
+
 
 def main():
     parser = argparse.ArgumentParser(__doc__)
@@ -81,7 +90,8 @@ def main():
 
     args = parser.parse_args()
 
-    sample_image_from_lines(args.kymograph_file, args.line_file, args.dilation, args.reduce_method)
+    sample_image_from_lines(args.kymograph_file, args.line_file,
+                            args.dilation, args.reduce_method)
 
 if __name__ == '__main__':
     main()

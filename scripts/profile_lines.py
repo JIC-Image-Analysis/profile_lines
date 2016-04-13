@@ -49,7 +49,7 @@ def yield_line_masks(segmented_lines):
         region = segmented_lines.region_by_identifier(i)
         yield region
 
-def sample_image_from_lines(image_file, lines_file, dilation):
+def sample_image_from_lines(image_file, lines_file, dilation, reduce_method):
 
     data_image = Image.from_file(image_file)
     line_image = Image.from_file(lines_file)
@@ -58,7 +58,13 @@ def sample_image_from_lines(image_file, lines_file, dilation):
 
     for n, line_region in enumerate(yield_line_masks(segmented_lines)):
         line_intensity = data_image * line_region
-        line_profile = np.amax(line_intensity, axis=1)
+        if reduce_method == "max":
+            line_profile = np.amax(line_intensity, axis=1)
+        elif reduce_method == "mean":
+            line_profile = np.sum(line_intensity, axis=1) / np.sum(line_region, axis=1)
+        else:
+            raise(RuntimeError("Unknown reduce method: {}".format(reduce_method)))
+        
 
         filename = "series_{}.csv".format(n)
         save_line_profile(filename, line_profile)
@@ -69,10 +75,13 @@ def main():
     parser.add_argument('line_file', help='Iamge containing lines')
     parser.add_argument('-d', '--dilation', default=2, type=int,
                         help='Dilation of line')
+    parser.add_argument('-r', '--reduce-method', default="max",
+                        choices=("max", "mean"),
+                        help='Method to reduce row to single value')
 
     args = parser.parse_args()
 
-    sample_image_from_lines(args.kymograph_file, args.line_file, args.dilation)
+    sample_image_from_lines(args.kymograph_file, args.line_file, args.dilation, args.reduce_method)
 
 if __name__ == '__main__':
     main()

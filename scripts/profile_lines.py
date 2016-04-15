@@ -11,7 +11,7 @@ from jicbioimage.core.transform import transformation
 from jicbioimage.segment import connected_components
 from jicbioimage.transform import dilate_binary
 
-Datum = namedtuple("datum", "time, intensity")
+Datum = namedtuple("datum", "time, intensity, series")
 
 
 @transformation
@@ -38,14 +38,14 @@ def csv_header():
     return ",".join(Datum._fields)
 
 
-def yield_data(line_profile):
+def yield_data(line_profile, series):
     for time, intensity in enumerate(line_profile):
-        yield Datum(str(time), str(intensity))
+        yield Datum(str(time), str(intensity), str(series))
 
 
-def save_line_profile(filename, line_profile):
+def save_line_profile(filename, line_profile, series):
 
-    line_strings = [",".join(d) for d in yield_data(line_profile)]
+    line_strings = [",".join(d) for d in yield_data(line_profile, series)]
 
     with open(filename, 'w') as f:
         f.write("{}\n".format(csv_header()))
@@ -86,7 +86,7 @@ def sample_image_from_lines(image_file, lines_file, dilation, reduce_method):
             raise(RuntimeError(err_msg))
 
         filename = "series_{:02d}.csv".format(n)
-        save_line_profile(filename, line_profile)
+        save_line_profile(filename, line_profile, n)
 
 
 def main():

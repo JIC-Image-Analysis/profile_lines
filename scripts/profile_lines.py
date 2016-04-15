@@ -9,7 +9,7 @@ import skimage.morphology
 from jicbioimage.core.image import Image
 from jicbioimage.core.transform import transformation
 from jicbioimage.segment import connected_components
-from jicbioimage.transform import dilate_binary
+from jicbioimage.transform import dilate_binary, remove_small_objects
 
 Datum = namedtuple("datum", "time, intensity, series")
 
@@ -60,6 +60,7 @@ def save_line_profile(filename, line_profile, series):
 def segment(line_image, dilation):
     lines = convert_to_signal(line_image)
     lines = skeletonize(lines)
+    lines = remove_small_objects(lines, min_size=10, connectivity=2)
     lines = dilate_binary(lines, selem=np.ones((1, dilation)))
     segmentation = connected_components(lines, background=0)
     return segmentation

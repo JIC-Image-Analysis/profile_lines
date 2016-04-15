@@ -39,5 +39,8 @@ For more help use the ``-h``/``--help`` option.
 
 To plot a single output CSV:
 
-    Rscript analysis/plot-line.R output/series_0.csv s0.png
+    Rscript analysis/individual-line-plot.R output/series_00.csv s0.png
 
+To plot all output:
+
+    Rscript analysis/all-series-plot.R output/all_series.csv all.png

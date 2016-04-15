@@ -35,7 +35,7 @@ def skeletonize(image):
 
 
 def csv_header():
-    return ",".join(Datum._fields)
+    return ",".join(Datum._fields) + "\n"
 
 
 def yield_data(line_profile, series):
@@ -43,13 +43,18 @@ def yield_data(line_profile, series):
         yield Datum(str(time), str(intensity), str(series))
 
 
+def csv_lines(line_profile, series):
+    return [",".join(d) for d in yield_data(line_profile, series)]
+
+
+def csv_body(line_profile, series):
+    return "\n".join(csv_lines(line_profile, series)) + "\n"
+
+
 def save_line_profile(filename, line_profile, series):
-
-    line_strings = [",".join(d) for d in yield_data(line_profile, series)]
-
     with open(filename, 'w') as f:
-        f.write("{}\n".format(csv_header()))
-        f.write('\n'.join(line_strings))
+        f.write(csv_header())
+        f.write(csv_body(line_profile, series))
 
 
 def segment(line_image, dilation):

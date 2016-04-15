@@ -78,20 +78,24 @@ def sample_image_from_lines(image_file, lines_file, dilation, reduce_method):
 
     segmented_lines = segment(line_image, dilation)
 
-    for n, line_region in enumerate(yield_line_masks(segmented_lines)):
-        line_intensity = data_image * line_region
-        if reduce_method == "max":
-            line_profile = np.amax(line_intensity, axis=1)
-        elif reduce_method == "mean":
-            sum_intensity = np.sum(line_intensity, axis=1)
-            sum_rows = np.sum(line_region, axis=1)
-            line_profile = sum_intensity / sum_rows
-        else:
-            err_msg = "Unknown reduce method: {}".format(reduce_method)
-            raise(RuntimeError(err_msg))
+    with open("all_series.csv", "w") as fh:
+        fh.write(csv_header())
+        for n, line_region in enumerate(yield_line_masks(segmented_lines)):
+            line_intensity = data_image * line_region
+            if reduce_method == "max":
+                line_profile = np.amax(line_intensity, axis=1)
+            elif reduce_method == "mean":
+                sum_intensity = np.sum(line_intensity, axis=1)
+                sum_rows = np.sum(line_region, axis=1)
+                line_profile = sum_intensity / sum_rows
+            else:
+                err_msg = "Unknown reduce method: {}".format(reduce_method)
+                raise(RuntimeError(err_msg))
 
-        filename = "series_{:02d}.csv".format(n)
-        save_line_profile(filename, line_profile, n)
+            series_filename = "series_{:02d}.csv".format(n)
+            save_line_profile(series_filename, line_profile, n)
+
+            fh.write(csv_body(line_profile, n))
 
 
 def main():

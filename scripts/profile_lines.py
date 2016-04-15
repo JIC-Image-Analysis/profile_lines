@@ -1,6 +1,7 @@
 """Profile lines."""
 
 import argparse
+from collections import namedtuple
 
 import numpy as np
 import skimage.morphology
@@ -9,6 +10,8 @@ from jicbioimage.core.image import Image
 from jicbioimage.core.transform import transformation
 from jicbioimage.segment import connected_components
 from jicbioimage.transform import dilate_binary
+
+Datum = namedtuple("datum", "time, intensity")
 
 
 @transformation
@@ -31,13 +34,21 @@ def skeletonize(image):
     return skimage.morphology.skeletonize(image)
 
 
+def csv_header():
+    return ",".join(Datum._fields)
+
+
+def yield_data(line_profile):
+    for time, intensity in enumerate(line_profile):
+        yield Datum(str(time), str(intensity))
+
+
 def save_line_profile(filename, line_profile):
 
-    line_strings = ["{},{}".format(str(t), str(d))
-                    for t, d in list(enumerate(line_profile))]
+    line_strings = [",".join(d) for d in yield_data(line_profile)]
 
     with open(filename, 'w') as f:
-        f.write('time,intensity\n')
+        f.write("{}\n".format(csv_header()))
         f.write('\n'.join(line_strings))
 
 
@@ -74,7 +85,7 @@ def sample_image_from_lines(image_file, lines_file, dilation, reduce_method):
             err_msg = "Unknown reduce method: {}".format(reduce_method)
             raise(RuntimeError(err_msg))
 
-        filename = "series_{}.csv".format(n)
+        filename = "series_{:02d}.csv".format(n)
         save_line_profile(filename, line_profile)
 
 
